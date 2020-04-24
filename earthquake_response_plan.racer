@@ -1,0 +1,120 @@
+(in-knowledge-base environment earthquake-response-plan)
+
+(define-primitive-concept Earthquake)
+
+;Impact represents the impact of natural disasters
+;ImpactType refers to injuries, damage to properties
+(define-primitive-concept Impact)
+(define-primitive-concept ImpactType)
+
+(define-primitive-concept Building)
+(define-primitive-concept OldBuilding)
+(define-primitive-concept NewBuilding)
+
+(define-primitive-concept Area)
+(define-primitive-concept CentralArea)
+(define-primitive-concept Suburbs)
+(define-primitive-concept HighRiskArea)
+(define-primitive-concept LowRiskArea)
+
+(define-primitive-concept Landform)
+(define-primitive-concept Mountains)
+(define-primitive-concept Hills)
+(define-primitive-concept Plain)
+
+(define-primitive-concept ResponseTeam)
+(define-primitive-concept Paramedics)
+(define-primitive-concept Firefighters)
+
+(implies OldBuilding Building)
+(implies NewBuilding Building)
+(disjoint OldBuilding NewBuilding)
+
+(implies CentralArea Area)
+(implies Suburbs Area)
+(implies HighRiskArea Area)
+(implies LowRiskArea Area)
+(disjoint CentralArea Suburbs HighRiskArea LowRiskArea)
+
+(implies Mountains Landform)
+(implies Hills Landform)
+(implies Plain Landform)
+(disjoint Mountains Hills Plain)
+
+(implies Paramedics ResponseTeam)
+(implies Firefighters ResponseTeam)
+(disjoint Paramedics Firefighters) 
+
+(define-concrete-domain-attribute is_made_of_material :type string :domain Building)
+(define-concrete-domain-attribute was_built_in_year :type real :domain Building)
+(define-concrete-domain-attribute is_likely_to_collapse :type string :domain Building)
+(define-concrete-domain-attribute has_soil :type string :domain Landform)
+(define-concrete-domain-attribute has_elevation :type string :domain Landform)
+(define-concrete-domain-attribute has_traffic :type string :domain Area)
+(define-concrete-domain-attribute has_meteorological_conditions :type string :domain Area)
+(define-concrete-domain-attribute had_magnitude :type real :domain Earthquake)
+
+(define-primitive-role is_located_in_area 
+	:domain Building 
+	:range Area )
+(define-primitive-role send_response_team 
+	:domain ResponseTeam 
+	:range Area)
+(define-primitive-role has_landform 
+	:domain Area 
+	:range Landform)
+(define-primitive-role has_impact_on 
+	:domain Impact 
+	:range Building 
+	:inverse is_impacted_by)
+(define-primitive-role causes_disaster_impact
+	:domain Earthquake
+	:range ImpactType
+	:inverse caused_by_disaster)
+
+(equivalent Suburbs (and Area (string= has_traffic "low")))
+(equivalent CentralArea (and Area (string= has_traffic "high")))
+
+(equivalent NewBuilding (and Building (> was_built_in_year 1980.0)))
+(equivalent OldBuilding (and Building (<= was_built_in_year 1980.0)))
+
+(equivalent OldBuilding (and Building (string= is_likely_to_collapse "high")))
+(equivalent NewBuilding (and Building (string= is_likely_to_collapse "low")))
+
+;(equivalent Suburbs (and Building (some is_located_in_area LowRiskArea)))
+
+(instance Hospital NewBuilding)
+(instance Church OldBuilding)
+
+(instance PiataUnirii CentralArea)
+(instance Someseni Suburbs)
+
+(instance Injuries ImpactType)
+(instance PropertiesDamage ImpactType)
+
+(instance Tohoku Earthquake)
+
+(related Hospital Suburbs is_located_in_area)
+(related Hospital LowRiskArea is_located_in_area)
+
+(related Paramedics HighRiskArea send_response_team)
+(related Firefighters HighRiskArea send_response_team)
+
+(related Earthquake PropertiesDamage causes_disaster_impact)
+(related PropertiesDamage Earthquake caused_by_disaster)
+
+(attribute-filler Hospital 1981.0 was_built_in_year)
+(attribute-filler Tohoku 9.0 had_magnitude)
+(attribute-filler Church "wood" is_made_of_material)
+
+(classify-tbox)
+(prepare-abox)
+(prepare-racer-engine)
+
+; Queries
+(evaluate (length (all-individuals)))
+(evaluate (length (all-atomic-concepts )))
+(evaluate (length (all-roles )))
+(evaluate (length (all-rules )))
+(abox-consistent? )
+(tbox-coherent? )
